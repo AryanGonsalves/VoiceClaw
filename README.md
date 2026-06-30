@@ -13,6 +13,20 @@ listener runs while idle, and heavy models unload themselves when not in use.
 > Full architecture, roadmap, and function catalog: `docs/DESIGN.md`.
 > Dense machine-readable project state (for seeding an AI dev chat): `CONTEXT.md`.
 
+## Download & install
+
+Grab a prebuilt Windows app from the [**Releases**](https://github.com/AryanGonsalves/VoiceClaw/releases)
+page — no Python setup required:
+
+- **VoiceClaw-Setup-0.1.0.exe** — one-click installer: Start Menu + desktop
+  shortcuts, optional auto-start at sign-in, and a clean uninstaller.
+- **VoiceClaw-portable.zip** — unzip anywhere and run `VoiceClaw.exe`; no install,
+  lowest SmartScreen friction.
+
+> VoiceClaw isn't code-signed yet, so Windows may show **"Windows protected your
+> PC."** That's expected for a brand-new indie app — click **More info → Run
+> anyway**. Prefer to run from source instead? See [Setup](#setup) below.
+
 ## What it can do
 
 - **Instant local control** (no cloud): "next video", "scroll down", "volume up",
@@ -122,26 +136,58 @@ The header has **Start/Stop listening**, a **Dictation** toggle, and a **Develop
 
 To package a single Windows `.exe`, see `packaging/BUILD.md`.
 
-## How requests are routed
+## How it works — the tiered brain
 
-1. **Learned cache** — if you've said this before and the agent resolved it with
-   deterministic actions, it replays **instantly** (personalized, offline, free).
-2. **Local skills** — clear, literal control commands run instantly via a tight
-   phrase→action grammar. If a match looks low-confidence it *declines* and falls
-   back to the agent **rather than running the wrong thing**.
-3. **Local model** — short factual/chit-chat questions go to Ollama if running.
-4. **Agent** — conversational, multi-step, web, files, and on-screen (vision)
-   requests escalate to the full tool-use loop. It **observes the screen before and
-   after each action** (keeping only the latest screenshot in context) so it acts on
-   real state instead of guessing, and can **ask a follow-up** via an on-screen
-   overlay (the `ask_user` tool) instead of guessing.
+Every request flows through four tiers, cheapest first. A request only falls through
+to the next tier when the current one can't handle it confidently, so the common case
+stays **instant and offline** and the cloud agent is reserved for genuinely hard tasks.
 
-### Learning from the agent
-When the agent resolves a new phrasing with deterministic actions (open a URL/app,
-close an app, a keypress, a scroll), that phrasing is **learned** and becomes instant
-next time — so the fast path grows to fit *your* speech patterns. Vision clicks are
-never cached (they depend on screen position). Clear the cache anytime via
-**Settings → "Forget all learned commands"**, the tray menu, or
+| Tier | Handles | Latency | Cost / privacy |
+|---|---|---|---|
+| **0 · Learned cache** | phrasings you've used before that resolved to fixed actions | instant | local, free |
+| **1 · Local skills** | literal control commands ("open chrome", "next video", "volume up") | instant | local, free |
+| **2 · Local model** | short factual / chit-chat questions (via Ollama, if running) | fast | local, free |
+| **3 · Agent** | multi-step, web, files, reasoning, on-screen vision | seconds | your API key |
+
+**Tier 1 — local skills.** A tight phrase→action grammar maps spoken control commands
+straight to keystrokes, app launches, URL opens, and window/media controls — no model
+in the loop. Crucially, if a phrase only *looks* like a command but the match is
+low-confidence, Tier 1 **declines and escalates** rather than firing the wrong action.
+Doing the wrong thing silently is worse than taking the slow path.
+
+**Tier 3 — the agent.** Conversational, multi-step, web, file, and on-screen requests
+escalate to a full tool-use loop. It **observes the screen before and after each
+action** (keeping only the latest screenshot in context) so it acts on real state
+instead of guessing, and it can **ask a follow-up question** through an on-screen
+overlay (the `ask_user` tool) when a request is ambiguous.
+
+### Learning — turning slow agent tasks into instant ones
+
+This is the part that makes VoiceClaw get **faster the more you use it**.
+
+When the agent (Tier 3) handles a request, it doesn't just act — it records the
+**sequence of deterministic primitives** it used to satisfy you: open this URL, launch
+that app, send these keystrokes, scroll here. If the whole task reduces to such
+repeatable primitives, VoiceClaw **caches the result against a normalized form of what
+you said** and promotes it to Tier 0. The next time you say it — or say it a little
+differently — it replays **instantly, offline, and free**, with no model call at all.
+
+A few design choices keep this useful rather than brittle:
+
+- **It learns from complex tasks, not just one-liners.** Even a request the agent had
+  to reason through multiple steps gets distilled down to its deterministic action
+  sequence and cached — so the *outcome* of expensive reasoning becomes a one-shot fast
+  path you never pay for again.
+- **Normalization beats your exact words.** Filler, casing, and small phrasing
+  differences are folded together, so "open my email", "open email", and "open up my
+  email" all land on the same learned entry instead of each paying the slow path.
+- **Position-dependent steps are never cached.** Anything that depended on *where*
+  something sat on screen (a vision click at some pixel) is deliberately left out — it
+  would break the instant a window moved, so those always re-run live through the agent.
+- **It's personal and local.** The cache reflects *your* speech and *your* apps, lives
+  on your machine, and never leaves it.
+
+Clear it anytime via **Settings → "Forget all learned commands"**, the tray menu, or
 `python main.py forget-learned`.
 
 ### Dictation / relay (talk to your dev agent)
@@ -186,32 +232,45 @@ Proprietary (see `LICENSE`). The product is **open-core**: this repo is the publ
 ## Project layout
 
 ```
-voice-claude/
+voiceclaw-app/
 ├── main.py                 # CLI entry: mode select + run loops
-├── install_autostart.py    # login auto-start (Win/macOS/Linux)
 ├── app_entry.py            # windowed entry for the packaged .exe
-├── packaging/              # PyInstaller spec + BUILD.md
+├── install_autostart.py    # login auto-start (Win/macOS/Linux)
+├── make_shortcuts.py       # desktop / Start-Menu shortcut helper
+├── packaging/              # PyInstaller spec, Inno Setup script + BUILD.md
+├── docs/                   # DESIGN, WAKEWORD, PLUGINS, TESTING, OPEN_CORE
+├── samples/plugins/        # example community plugin
+├── tests/                  # pytest suite (83 tests + routing_eval)
 ├── requirements.txt / requirements-dev.txt / pytest.ini / .gitignore
 ├── config.example.yaml
-├── CONTEXT.md              # dense project state for AI dev chats
-├── docs/DESIGN.md          # architecture, roadmap, bugs, function catalog
-├── .github/workflows/ci.yml
-├── tests/                  # pytest suite (83 tests + routing_eval)
 └── voiceclaw/
-    ├── app.py              # assembly + tiered request handling (shared core)
-    ├── learned_skills.py   # personalized learned-command cache (agent->fast path)
+    ├── app.py              # assembly + tiered request handling
+    ├── router.py           # tier dispatch (learned → local → model → agent)
+    ├── learned_skills.py   # personalized learned-command cache (public shim)
+    ├── local_skills.py     # Tier 1: rule-based local control (public shim)
+    ├── local_llm.py        # Tier 2: local model (Ollama) bridge
+    ├── local_agent.py      # on-device fallback agent loop
+    ├── brain.py            # Anthropic (Claude) agent backend
+    ├── openai_brain.py     # OpenAI / Groq / OpenRouter backend
+    ├── claude_code_brain.py# Claude Code backend (personal use only)
+    ├── tools.py            # agent tool implementations (apps, files, keys, vision)
+    ├── mcp_server.py       # expose VoiceClaw tools over MCP
     ├── config.py           # config + env overrides
     ├── auth.py             # API-key / subscription credential providers
     ├── credentials_store.py# secure storage (OS keychain + file fallback)
-    ├── login.py            # `login`/`logout`/`status` flow
+    ├── login.py            # login / logout / status flow
     ├── hotkeys.py          # global push-to-talk / kill-switch (pynput)
     ├── issues.py           # failures log for the UI
     ├── overlay.py          # on-screen clarify dialog (ask_user)
+    ├── overlay_ring.py     # listening-state visual ring
     ├── plugins.py          # community plugin loader
-    └── ui.py               # PySide6 companion desktop app
+    ├── resources.py        # bundled assets / paths
     ├── audio.py            # mic capture + endpointing + chime
+    ├── audio_ducker.py     # lowers other audio while listening
     ├── wakeword.py         # openWakeWord listener (multi/custom)
     ├── stt.py              # faster-whisper (lazy + unloadable)
     ├── tts.py              # pyttsx3 speech (+ print fallback)
-    ├── local_skills.py     # Tier 1: rule-based local control (no LLM)
-    ├── local_llm.py     
+    ├── tray.py             # background system-tray app
+    ├── ui.py               # PySide6 companion desktop app
+    └── core/               # PRIVATE moat — grammar + learned cache (shipped compiled)
+```
