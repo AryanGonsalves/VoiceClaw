@@ -1,0 +1,40 @@
+# --- Core (required) ---
+anthropic>=0.39.0
+openai>=1.40            # OpenAI/Groq/OpenRouter-compatible backend (optional)          # Claude API ("brain")
+pyyaml>=6.0               # config
+requests>=2.31            # web fetch / Ollama HTTP
+
+# --- Voice I/O (recommended; app falls back to text mode if missing) ---
+openwakeword>=0.6.0        # offline wake-word detection
+faster-whisper>=1.0.0      # offline speech-to-text
+sounddevice>=0.4.6         # mic capture
+numpy>=1.24               # audio buffers
+pyttsx3>=2.90             # offline text-to-speech
+
+# --- PC control tools (recommended) ---
+psutil>=5.9               # processes / system info
+pyautogui>=0.9.54         # type / click / keypress GUI automation
+pycaw>=20240210          # Alexa-style audio ducking (Windows, optional)
+
+# --- Companion desktop UI (optional; for `python -m voiceclaw.ui`) ---
+PySide6>=6.5
+
+# --- Background tray app (optional; for `python -m voiceclaw.tray`) ---
+pystray>=0.19            # system-tray icon + menu
+pillow>=10.0             # icon image generation
+
+# --- Claude Code route (optional; personal subscription via MCP) ---
+mcp>=1.0
+
+# --- Optional: real 'Hey Claude' wake word (Picovoice Porcupine) ---
+pvporcupine>=3.0
+
+# --- Global hotkeys (optional; push-to-talk / kill-switch) ---
+pynput>=1.7
+
+# --- Secure login storage (optional; OS keychain) ---
+keyring>=24.0
+
+# --- Optional ---
+# ollama is used over HTTP (http://localhost:11434); install separately from ollama.com
+# piper-tts                # nicer offline voice (optional upgrade over pyttsx3)

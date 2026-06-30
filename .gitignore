@@ -1,0 +1,49 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+config.yaml
+.voiceclaw/
+*.log
+.DS_Store
+cc_debug.txt
+cc_test_result.txt
+
+# dev scratch / diagnostics (not part of the product)
+diag_*.py
+diag_*.txt
+fix_setup.bat
+fix_result.txt
+autostart_only.bat
+autostart_result.txt
+log_check.bat
+log_check.txt
+*_result.txt
+diag_*.bat
+
+# ===== OPEN-CORE: proprietary moat is NOT published to the public repo =====
+# Shipped builds get it as compiled .pyd (full functionality, unreadable source).
+voiceclaw/core/
+# grammar corpus + the tests that reveal it (live with the private core)
+routing_eval.py
+routing_stress.py
+tests/test_local_skills.py
+tests/test_routing.py
+tests/test_routing_stress.py
+tests/test_shortcuts.py
+tests/test_learned_skills.py
+tests/test_learning_loop.py
+tests/test_plugins.py
+tests/test_integration.py
+
+# proprietary: no open-source community/contribution files in the public repo
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+.github/ISSUE_TEMPLATE/
+.github/PULL_REQUEST_TEMPLATE.md
+# leftover sandbox test dir (delete on Windows)
+_renametest2/
+
+# private dev docs that describe the proprietary core internals — keep out of public repo
+CONTEXT.md
+CHAT_HANDOFF.md

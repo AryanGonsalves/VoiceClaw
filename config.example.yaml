@@ -1,0 +1,72 @@
+# Copy to config.yaml and edit. Environment variables override these.
+
+brain:
+  # How to authenticate to Claude:
+  #   auto         -> use API key if present, else a subscription token
+  #   api_key      -> Anthropic API key only (pay-as-you-go)
+  #   subscription -> Claude Pro/Max via official OAuth token (see below)
+  auth: "auto"
+  # API key. Better: set env var ANTHROPIC_API_KEY instead of putting it here.
+  anthropic_api_key: ""
+  model: "claude-sonnet-4-6"
+  max_tokens: 2048
+  # SUBSCRIPTION LOGIN (moderate users with Claude Pro/Max):
+  #   1. Install Claude Code and run:  claude setup-token
+  #   2. Set the env var it gives you: CLAUDE_CODE_OAUTH_TOKEN=...
+  #   VoiceClaw will use it as a Bearer token. This is the ONLY supported way
+  #   to use a subscription — do not use claude.ai web cookies (against ToS).
+
+local_llm:
+  enabled: true
+  base_url: "http://localhost:11434"   # Ollama default
+  model: "llama3.2:3b"
+  fast_path_max_words: 8
+
+wakeword:
+  enabled: true
+  engine: "openwakeword"        # openwakeword (free/offline) | porcupine (real "Hey Claude")
+  # Enable one or more. Built-ins: hey_jarvis | alexa | hey_mycroft.
+  # List several to let users say ANY of them (the "either" toggle).
+  models: ["hey_jarvis"]
+  # To wake on the literal word "claude" / "hey claude", train a model
+  # (openWakeWord or Picovoice Porcupine) and point this at the file:
+  custom_model_path: ""        # e.g. "models/hey_claude.onnx"
+  threshold: 0.5
+  # For a real "Hey Claude" wake word: create it in the Picovoice Console (free),
+  # download the .ppn, set engine: "porcupine" and fill these:
+  porcupine:
+    access_key: ""
+    keyword_path: ""        # e.g. "models/Hey-Claude_windows.ppn"
+    builtin_keyword: ""     # fallback builtin, e.g. "jarvis"
+    sensitivity: 0.5
+
+stt:
+  enabled: true
+  model: "base"          # tiny | base | small | medium
+  language: "en"
+
+tts:
+  enabled: true
+  rate: 185
+  voice: ""
+
+hotkeys:
+  enabled: true
+  # Global system-wide shortcuts (work in any app). pynput syntax.
+  push_to_talk: "<ctrl>+<alt>+space"   # capture one command now
+  kill_switch: "<ctrl>+<alt>+q"        # stop listening / quit
+  dictation_ptt: "<ctrl_r>"      # hold Right Ctrl to dictate into the focused window
+  dictation_ptt_send: true        # press Enter after typing
+
+agent:
+  max_tool_iterations: 8
+  confirm_patterns: ["rm ", "del ", "format", "shutdown", "rmdir", "mkfs", "dd ", "> /dev"]
+  allowed_paths: []      # empty = home dir only
+
+runtime:
+  idle_unload_seconds: 300   # unload heavy models (Whisper) after this idle time
+  log_transcript: true
+  transcript_path: "~/.voiceclaw/transcript.log"
+
+learning:
+  enabled: true   # learn repeated commands from the agent for instant reuse
