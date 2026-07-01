@@ -3,9 +3,13 @@
 All notable changes to VoiceClaw are documented here.
 Format follows Keep a Changelog; this project uses semantic versioning.
 
-## [Unreleased]
+## [0.1.0] — 2026-06-30
+
+First public release.
 
 ### Added
+- **Packaging & release**: one-click Windows **installer** (Inno Setup, per-user, no admin) and a **portable zip**, both shipped as GitHub Release assets. PyInstaller onedir bundle; the proprietary Tier-1 grammar + learned cache ship **compiled**, not as source.
+- **Open-core split**: the public repo is the shell; the command grammar and learned-cache "core" live in a private module and ship only as compiled binaries. Public shims fall back to agent-only mode if the core is absent.
 - **Window & system voice commands**: minimize / maximize / snap left|right / show desktop / switch window / lock screen / take a screenshot (instant key combos).
 - **Expanded website routing**: ~30 more web destinations (news, dev, shopping, reference, mail) open as URLs; widened routing stress test to 1005 cases (all ideal).
 - **Routing stress test** (337 generated commands across all PC-activity categories) as a regression guard; added launch-verb synonyms (launch / fire up / boot up / open up) and close synonyms (kill / shut down) to the instant path.
@@ -50,8 +54,8 @@ Format follows Keep a Changelog; this project uses semantic versioning.
 - Auto-start shortcut creation broke on usernames containing an apostrophe.
 - OpenAI backend silently inactive when the `openai` package wasn't installed.
 
-## [0.1.0] — 2026-06-23
-First public prototype.
+## [0.0.1] — 2026-06-23
+First internal prototype.
 
 ### Added
 - Three-tier hybrid brain: local control skills → local model (Ollama) → Claude agent.

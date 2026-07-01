@@ -17,6 +17,14 @@ absent, the shims in `voiceclaw/local_skills.py` / `learned_skills.py` fall back
 to an agent-only mode — the app still runs, just without the instant offline
 grammar/learning. (Keep the core's source in a SEPARATE PRIVATE repo or backup.)
 
+## What v0.1.0 actually shipped
+The first release ships the core as **compiled Python bytecode (`.pyc`) inside the
+PyInstaller archive** — the installer contains no `.py` source for the core, only the
+public shims are readable. That is a solid deterrent (no readable source), though weaker
+than a Cython `.pyd`. The `.pyd` path below needs the Microsoft C++ Build Tools, which
+weren't available on the build machine (install blocked by UAC); PyArmor is the
+no-compiler alternative.
+
 ## Release flow (build machine, where the core source IS present)
 
 1. **Compile the core to binary:**

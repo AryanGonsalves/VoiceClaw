@@ -1,28 +1,22 @@
 # Cutting a release
 
-1. Update `CHANGELOG.md` and the version in `voiceclaw/__init__.py`.
-2. Commit, then tag:
-   ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
-   ```
-3. The **release workflow** (`.github/workflows/release.yml`) runs on the tag:
-   it builds the Windows app with PyInstaller, zips `dist/VoiceClaw`, and
-   attaches it to a GitHub Release.
-4. (Optional) Build the installer locally with Inno Setup (`packaging/installer.iss`)
-   and upload `VoiceClaw-Setup-*.exe` to the same release.
+The Windows app is built **locally**: GitHub's Linux runners can't produce a Windows
+`.exe`, and the full test suite needs the private core. CI only compile-checks the shell.
 
-## Manual fallback (no CI)
-On a Windows machine:
-```bat
-setup.bat
-.venv\Scripts\activate
-pip install pyinstaller
-pyinstaller packaging\VoiceClaw.spec
-powershell Compress-Archive dist\VoiceClaw VoiceClaw-0.1.0-win64.zip
-```
-Then create the GitHub Release in the web UI and upload the zip (and installer).
+## Steps (on the Windows build machine, with the private core present)
+1. Bump `CHANGELOG.md` and the version in `voiceclaw/__init__.py`.
+2. Build the app bundle: `packaging\build_app.bat` -> `dist\VoiceClaw\VoiceClaw.exe` (+ `_internal`).
+3. Build the installer: `packaging\build_installer.bat` -> `packaging\Output\VoiceClaw-Setup-<ver>.exe`.
+   Needs Inno Setup: `winget install JRSoftware.InnoSetup --scope user` (user scope, no admin).
+4. Build the portable zip: `packaging\zip_dist.bat` -> `dist\VoiceClaw-portable.zip`.
+5. Tag and push: `git tag v<ver> && git push origin v<ver>`.
+6. On GitHub -> Releases -> Draft new release -> pick the tag -> **drag both assets in**
+   (installer + portable zip) -> Publish. Both exceed GitHub's 100 MB file limit, so they
+   must be **release assets** (allowed up to 2 GB), not committed files.
 
-> Note: PyInstaller bundling of faster-whisper/openWakeWord can need tweaks; test
-> the produced exe before publishing. Sign the binary (signtool) to avoid
-> SmartScreen warnings.
+## Notes
+- The installer/zip are **not** code-signed, so SmartScreen shows "unknown publisher";
+  users click **More info -> Run anyway** (the portable zip trips it far less). Signing
+  (signtool + a cert, or Azure Trusted Signing) removes this — deferred, no budget.
+- `.github/workflows/release.yml` (PyInstaller-on-tag) is kept for reference, but a Linux
+  runner can't build the Windows binary; the local `.bat` flow above is the real path.
