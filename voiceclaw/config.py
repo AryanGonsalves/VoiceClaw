@@ -105,8 +105,12 @@ class Config:
         return cfg
 
     def _apply_env(self) -> None:
-        if os.environ.get("ANTHROPIC_API_KEY"):
-            self.data["brain"]["anthropic_api_key"] = os.environ["ANTHROPIC_API_KEY"]
+        # NOTE: We deliberately do NOT copy ANTHROPIC_API_KEY into
+        # self.data["brain"]["anthropic_api_key"] here. self.data is dumped back
+        # to config.yaml by the UI (see ui.py save handlers), so baking a real
+        # env-provided key into it would persist the secret to disk in plaintext.
+        # The env var is resolved at read time by the `anthropic_key` property
+        # (and by auth._api_key, which checks the env var first).
         if os.environ.get("VOICECLAUDE_MODEL"):
             self.data["brain"]["model"] = os.environ["VOICECLAUDE_MODEL"]
         if os.environ.get("VOICECLAUDE_AUTH"):
@@ -120,7 +124,10 @@ class Config:
 
     @property
     def anthropic_key(self) -> str:
-        return self.data["brain"].get("anthropic_api_key", "")
+        # Prefer the env var (resolved at access time so it is never persisted
+        # into self.data / dumped to config.yaml), else the config-file value.
+        return os.environ.get("ANTHROPIC_API_KEY") \
+            or self.data["brain"].get("anthropic_api_key", "")
 
     @property
     def wake_models(self) -> List[str]:

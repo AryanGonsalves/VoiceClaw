@@ -47,3 +47,4 @@ _renametest2/
 # private dev docs that describe the proprietary core internals — keep out of public repo
 CONTEXT.md
 CHAT_HANDOFF.md
+_private_core/
